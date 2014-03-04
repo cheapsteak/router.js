@@ -22,7 +22,7 @@ module.exports = function(grunt) {
 
   config.env = process.env;
   config.pkg = grunt.file.readJSON('package.json');
-
+  config.pkg.name = config.pkg.name.replace(/\.js$/, '');
   // Load custom tasks from NPM
   grunt.initConfig(config);
 };
