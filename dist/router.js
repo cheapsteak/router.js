@@ -53,7 +53,7 @@ var define, requireModule, require, requirejs;
 })();
 
 define("router/handler-info",
-  ["./utils","rsvp/promise","exports"],
+  ["./utils","rsvp","exports"],
   function(__dependency1__, __dependency2__, __exports__) {
     "use strict";
     var bind = __dependency1__.bind;
@@ -61,7 +61,7 @@ define("router/handler-info",
     var serialize = __dependency1__.serialize;
     var promiseLabel = __dependency1__.promiseLabel;
     var applyHook = __dependency1__.applyHook;
-    var Promise = __dependency2__["default"];
+    var Promise = __dependency2__.Promise;
 
     function HandlerInfo(_props) {
       var props = _props || {};
@@ -380,21 +380,21 @@ define("router/handler-info/unresolved-handler-info-by-param",
     __exports__["default"] = UnresolvedHandlerInfoByParam;
   });
 define("router/router",
-  ["route-recognizer","rsvp/promise","./utils","./transition-state","./transition","./transition-intent/named-transition-intent","./transition-intent/url-transition-intent","./handler-info","exports"],
+  ["route-recognizer","./utils","rsvp","./transition-state","./transition","./transition-intent/named-transition-intent","./transition-intent/url-transition-intent","./handler-info","exports"],
   function(__dependency1__, __dependency2__, __dependency3__, __dependency4__, __dependency5__, __dependency6__, __dependency7__, __dependency8__, __exports__) {
     "use strict";
     var RouteRecognizer = __dependency1__["default"];
-    var Promise = __dependency2__["default"];
-    var trigger = __dependency3__.trigger;
-    var log = __dependency3__.log;
-    var slice = __dependency3__.slice;
-    var forEach = __dependency3__.forEach;
-    var merge = __dependency3__.merge;
-    var serialize = __dependency3__.serialize;
-    var extractQueryParams = __dependency3__.extractQueryParams;
-    var getChangelist = __dependency3__.getChangelist;
-    var promiseLabel = __dependency3__.promiseLabel;
-    var callHook = __dependency3__.callHook;
+    var trigger = __dependency2__.trigger;
+    var log = __dependency2__.log;
+    var slice = __dependency2__.slice;
+    var forEach = __dependency2__.forEach;
+    var merge = __dependency2__.merge;
+    var serialize = __dependency2__.serialize;
+    var extractQueryParams = __dependency2__.extractQueryParams;
+    var getChangelist = __dependency2__.getChangelist;
+    var promiseLabel = __dependency2__.promiseLabel;
+    var callHook = __dependency2__.callHook;
+    var Promise = __dependency3__.Promise;
     var TransitionState = __dependency4__["default"];
     var logAbort = __dependency5__.logAbort;
     var Transition = __dependency5__.Transition;
@@ -405,7 +405,17 @@ define("router/router",
 
     var pop = Array.prototype.pop;
 
-    function Router() {
+    function Router(_options) {
+      var options = _options || {};
+      this.getHandler = options.getHandler || this.getHandler;
+      this.updateURL = options.updateURL || this.updateURL;
+      this.replaceURL = options.replaceURL || this.replaceURL;
+      this.didTransition = options.didTransition || this.didTransition;
+      this.willTransition = options.willTransition || this.willTransition;
+      this.delegate = options.delegate || this.delegate;
+      this.triggerEvent = options.triggerEvent || this.triggerEvent;
+      this.log = options.log || this.log;
+
       this.recognizer = new RouteRecognizer();
       this.reset();
     }
@@ -488,6 +498,8 @@ define("router/router",
       hasRoute: function(route) {
         return this.recognizer.hasRoute(route);
       },
+
+      getHandler: function() {},
 
       queryParamsTransition: function(changelist, wasTransitioning, oldState, newState) {
         var router = this;
@@ -724,7 +736,7 @@ define("router/router",
         var activeQPsOnNewHandler = {};
         merge(activeQPsOnNewHandler, queryParams);
 
-        var activeQueryParams  = this.testState.queryParams;
+        var activeQueryParams  = state.queryParams;
         for (var key in activeQueryParams) {
           if (activeQueryParams.hasOwnProperty(key) &&
               activeQPsOnNewHandler.hasOwnProperty(key)) {
@@ -750,16 +762,7 @@ define("router/router",
 
         @param {String} message The message to log.
       */
-      log: null,
-
-      _willChangeContextEvent: 'willChangeContext',
-      _triggerWillChangeContext: function(handlerInfos, newTransition) {
-        trigger(this, handlerInfos, true, [this._willChangeContextEvent, newTransition]);
-      },
-
-      _triggerWillLeave: function(handlerInfos, newTransition, leavingChecker) {
-        trigger(this, handlerInfos, true, ['willLeave', newTransition, leavingChecker]);
-      }
+      log: null
     };
 
     /**
@@ -1189,15 +1192,13 @@ define("router/router",
           }
           return false;
         };
-
-        router._triggerWillLeave(leaving, newTransition, leavingChecker);
-      }
-
-      if (changing.length > 0) {
-        router._triggerWillChangeContext(changing, newTransition);
       }
 
       trigger(router, oldHandlers, true, ['willTransition', newTransition]);
+
+      if (router.willTransition) {
+        router.willTransition(oldHandlers, newState.handlerInfos, newTransition);
+      }
     }
 
     __exports__["default"] = Router;
@@ -1494,14 +1495,14 @@ define("router/transition-intent/url-transition-intent",
     }
   });
 define("router/transition-state",
-  ["./handler-info","./utils","rsvp/promise","exports"],
+  ["./handler-info","./utils","rsvp","exports"],
   function(__dependency1__, __dependency2__, __dependency3__, __exports__) {
     "use strict";
     var ResolvedHandlerInfo = __dependency1__.ResolvedHandlerInfo;
     var forEach = __dependency2__.forEach;
     var promiseLabel = __dependency2__.promiseLabel;
     var callHook = __dependency2__.callHook;
-    var Promise = __dependency3__["default"];
+    var Promise = __dependency3__.Promise;
 
     function TransitionState(other) {
       this.handlerInfos = [];
@@ -1610,10 +1611,10 @@ define("router/transition-state",
     __exports__["default"] = TransitionState;
   });
 define("router/transition",
-  ["rsvp/promise","./handler-info","./utils","exports"],
+  ["rsvp","./handler-info","./utils","exports"],
   function(__dependency1__, __dependency2__, __dependency3__, __exports__) {
     "use strict";
-    var Promise = __dependency1__["default"];
+    var Promise = __dependency1__.Promise;
     var ResolvedHandlerInfo = __dependency2__.ResolvedHandlerInfo;
     var trigger = __dependency3__.trigger;
     var slice = __dependency3__.slice;
@@ -2122,7 +2123,7 @@ define("router/utils",
 
     function callHook(obj, _hookName, arg1, arg2) {
       var hookName = resolveHook(obj, _hookName);
-      return obj[hookName].call(obj, arg1, arg2);
+      return hookName && obj[hookName].call(obj, arg1, arg2);
     }
 
     function applyHook(obj, _hookName, args) {
