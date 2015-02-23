@@ -11,6 +11,7 @@ var getChangelist = require("./utils").getChangelist;
 var promiseLabel = require("./utils").promiseLabel;
 var callHook = require("./utils").callHook;
 var Promise = require("rsvp").Promise;
+var Promise = require("rsvp").Promise;
 var TransitionState = require("./transition-state")["default"];
 var logAbort = require("./transition").logAbort;
 var Transition = require("./transition").Transition;

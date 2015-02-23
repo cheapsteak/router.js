@@ -341,6 +341,7 @@ define("router/router",
     var promiseLabel = __dependency2__.promiseLabel;
     var callHook = __dependency2__.callHook;
     var Promise = __dependency3__.Promise;
+    var Promise = __dependency3__.Promise;
     var TransitionState = __dependency4__["default"];
     var logAbort = __dependency5__.logAbort;
     var Transition = __dependency5__.Transition;
